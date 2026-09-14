@@ -1,5 +1,5 @@
 # Stage 1: Build the Node.js application
-FROM node:18-alpine as build
+FROM 265020546803.dkr.ecr.us-east-1.amazonaws.com/node:18-alpine as build
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN npm run build
 RUN ls -l && ls -l dist
 
 # Stage 2: Serve the built application using Nginx
-FROM nginx:alpine
+FROM 265020546803.dkr.ecr.us-east-1.amazonaws.com/nginx:alpine
 
 # Remove default Nginx configuration
 RUN rm /etc/nginx/conf.d/default.conf

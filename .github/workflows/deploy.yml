@@ -1,46 +1,120 @@
-name: Build and Deploy bank app
+name: Build and deploy frontend-app using ecr
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
-  build-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: checkout code
-      uses: actions/checkout@v3
+      # 1. Pull down the repository source code onto the GitHub runner
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+      # 2. Configure AWS credentials so the runner can talk to your AWS account
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-    - name: Login to ECR
-      run: |
-        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
-
-    - name: Build and Push Docker Image
-      run: |
-        BRANCH_NAME=${{ github.ref_name }}
-        docker build -t product-webapp .
-        docker tag product-webapp ${{ secrets.ECR_REPOSITORY_URI }}/product-webapp:$BRANCH_NAME
-        docker push ${{ secrets.ECR_REPOSITORY_URI }}/product-webapp:$BRANCH_NAME
-
-    - name: Deploy application
-      uses: appleboy/ssh-action@v0.1.6
-      with:
-        host: ${{ secrets.SERVER_IP }}
-        username: ubuntu
-        key: ${{ secrets.SSH_KEY }}
-        options: "-o StrictHostKeyChecking=no"
-        script: |
+      # 3. Log into ECR using the AWS CLI tool
+      - name: Log in to ECR
+        run: |
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
-          cd /home/ubuntu/product-app-webapp
-          docker-compose down
-          docker-compose pull
-          docker-compose up -d
+
+      # 4. Build, dynamically tag, and push the image to AWS ECR
+      - name: Build and push docker image to registry
+
+        env:
+          ECR_REPOSITORY_URI: ${{ secrets.ECR_REPOSITORY_URI }}
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          # Build the image locally
+          docker build -t frontend-app .
+          
+          # Tag the image using the ECR URI format and the current branch name
+          docker tag frontend-app $ECR_REPOSITORY_URI/frontend-app:$BRANCH_NAME
+          
+          # Push the final image to your remote container registry
+          docker push $ECR_REPOSITORY_URI/frontend-app:$BRANCH_NAME
+
+
+
+
+      # 5. Connect to your server over SSH and deploy the latest app container
+      - name: Deploy application
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.INSTANCE_IP }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Log into ECR on your remote server using your AWS credentials (FIXED REGION)
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
+            
+            # Navigate to your deployment folder on the server
+            cd /home/ubuntu/app/devops-frontend-app
+            
+            # Stop the existing services, pull new layers, and bring them back up
+            docker compose up --force-recreate -d
+
+
+
+
+
+
+
+
+
+
+
+# name: Build and deploy frontend-app
+
+# on:
+#   push:
+#     branches: [ "main" ]
+
+# jobs:
+#   build-deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#     - name: checkout code
+#       uses: actions/checkout@v3
+
+#     - name: AWS Credentials
+#       uses: aws-actions/configure-aws-credentials@v4
+#       with:
+#         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#         aws-region: us-east-1
+
+#     - name: Login to ECR
+#       run: |
+#         aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
+
+#     - name: Build and Push Docker Image
+#       run: |
+#         BRANCH_NAME=${{ github.ref_name }}
+#         docker build -t product-webapp .
+#         docker tag product-webapp ${{ secrets.ECR_REPOSITORY_URI }}/product-webapp:$BRANCH_NAME
+#         docker push ${{ secrets.ECR_REPOSITORY_URI }}/product-webapp:$BRANCH_NAME
+
+#     - name: Deploy application
+#       uses: appleboy/ssh-action@v0.1.6
+#       with:
+#         host: ${{ secrets.SERVER_IP }}
+#         username: ubuntu
+#         key: ${{ secrets.SSH_KEY }}
+#         options: "-o StrictHostKeyChecking=no"
+#         script: |
+#           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
+#           cd /home/ubuntu/product-app-webapp
+#           docker-compose down
+#           docker-compose pull
+#           docker-compose up -d
+
