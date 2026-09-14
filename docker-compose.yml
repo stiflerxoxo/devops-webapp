@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  frontend:
+    image: product-webapp
+    build:
+      context: .
+    container_name: product-webapp
+    ports:
+      - "82:80"
+    networks:
+      - app_network
+networks:
+  app_network:
+    external: true
