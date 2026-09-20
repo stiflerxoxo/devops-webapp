@@ -18,18 +18,18 @@ phases:
       # - echo Tagging the Docker image...
       - docker tag frontend-webapp:$BRANCH_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$BRANCH_NAME
 
-  # post_build:
-  #   commands:
-  #     # - echo Pushing the Docker image...
-  #     - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$BRANCH_NAME
+  post_build:
+    commands:
+      # - echo Pushing the Docker image...
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$BRANCH_NAME
       
-  #     - aws ssm get-parameter --name /codebuild/ssh --with-decryption --query "Parameter.Value" --output text > /tmp/ssh-key.pem
-  #     - chmod 600 /tmp/ssh-key.pem
+      - aws ssm get-parameter --name /codebuild/ssh --with-decryption --query "Parameter.Value" --output text > /tmp/ssh-key.pem
+      - chmod 600 /tmp/ssh-key.pem
 
-  #     # - echo "Connecting to EC2 and deploying the new image..."
-  #     - |
-  #       ssh -o StrictHostKeyChecking=no -i /tmp/ssh-key.pem ubuntu@3.88.105.230 << 'EOF'
-  #       # echo "Connected to EC2"
-  #       cd /home/ubuntu/app/devops-webapp
-  #       docker compose up -d --force-recreate
-  #       EOF
+      # - echo "Connecting to EC2 and deploying the new image..."
+      - |
+        ssh -o StrictHostKeyChecking=no -i /tmp/ssh-key.pem ubuntu@100.53.177.18 << 'EOF'
+        # echo "Connected to EC2"
+        cd /home/ubuntu/app/devops-webapp
+        docker compose up -d --force-recreate
+        EOF
