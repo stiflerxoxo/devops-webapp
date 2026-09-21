@@ -16,7 +16,7 @@ phases:
       # - echo Building the Docker image for branch $BRANCH_NAME...
       - docker build -t frontend-webapp:main .
       # - echo Tagging the Docker image...
-      - docker tag frontend-webapp:$BRANCH_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$BRANCH_NAME
+      - docker tag frontend-app:$BRANCH_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$BRANCH_NAME
 
   post_build:
     commands:
