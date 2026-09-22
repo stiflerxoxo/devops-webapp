@@ -8,7 +8,9 @@ type Product = {
 };
 
 const App = () => {
-  const apiUrl = 'http://localhost:8080/api/products';
+  // const apiUrl = 'http://localhost:8080/api/products';
+  const apiUrl = '/api/products';
+
 
   const [products, setProducts] = useState<Product[]>([]);
   const [newProductName, setNewProductName] = useState('');
